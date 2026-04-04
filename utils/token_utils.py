@@ -1,7 +1,7 @@
 import jwt
 import time
  
-SECRET = "sts-signing-secret"
+SECRET = "sts-signing-secret-for-cs5321-netsec-project"
 ALGORITHM = "HS256"
  
 def sign_token(payload):
