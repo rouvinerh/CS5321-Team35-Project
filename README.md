@@ -1,10 +1,10 @@
 # CS5321 Project
 
-Demonstrates a cross-session token splicing attack against a vulnerable OAuth 2.0 STS (RFC 8693), and a session-bound capability chain defence based on the Stateless Internet Flow Filter protocol.
+Demonstrates a cross-session token splicing attack against a vulnerable OAuth 2.0 STS (RFC 8693), and a session-bound capability chain defence based on the Stateless Internet Flow Filter (SIFF) protocol.
 
 ## Vulnerability
 
-RFC 8693 does not require the STS to cross-validate the `subject_token` and `actor_token` in an exchange request. A vulnerable STS validates each token's signature independently and, seeing two valid tokens, issues a new one without verifying they belong to the same delegation flow.
+RFC 8693 does not require the STS to verify the full delegation path when processing a token exchange. Even with a caller identity check, an attacker who steals a token can splice it with their own token as the actor, inserting themselves into a delegation chain they were never part of. The STS accepts the exchange because each token is individually valid. The full path is never verified.
 
 ## Setup and Demo
 
@@ -28,15 +28,15 @@ Agents hold a name and a token. Each agent calls `delegate_to(sts, target, scope
 
 2 methods are exposed:
 
-`initial_grant(user, agent, scopes)` is called when a user first authenticates to an agent. Issues the first token in the delegation chain with the user as `sub`, the agent as both `aud` and the initial `act`.
+1. `initial_grant(user, agent, scopes)` is called when a user first authenticates to an agent. Issues the first token in the delegation chain with the user as `sub`, the agent as both `aud` and the initial `act`.
 
-`exchange(subject_token, actor_token, requesting_agent, new_scopes)` is called when an agent delegates to another. Verifies both token signatures and issues a new token combining the `sub` from `subject_token` and the `act` chain from `actor_token`.
+2. `exchange(subject_token, actor_token, requesting_agent, new_scopes, caller)` is called when an agent delegates to another. Verifies both token signatures and checks that `caller` matches `actor_token.act.sub`. Issues a new token combining the `sub` from `subject_token` and the `act` chain from `actor_token`.
 
-The vulnerable implementation does not check that `subject_token.aud` matches `actor_token.act.sub`, which is what makes the splice possible.
+The vulnerable implementation does not check that `subject_token.aud` matches `actor_token.act.sub`, so the full delegation path is never verified.
 
 ### Tokens
 
-Tokens are signed JWTs using HS256, carrying 4 token fields like so:
+Tokens are signed JWTs using HS256, carrying 4 fields:
 
 ```json
 {
@@ -68,20 +68,10 @@ In a legitimate exchange, `aud` must match the outermost `act.sub`, which dictat
 
 ## Attack Demonstration
 
-Each user has a protected resource that can only be accessed by presenting a valid token. The goal of the attacker is to access the protected resource of any user.
+The demo runs through 2 stages:
 
-The resource server checks 2 things before returning information based on `sub`:
+1. **Legitimate chain**: Alice authenticates to Agent A, which delegates to Agent B with reduced scope. The legitimate `act` chain is printed to show what a valid delegation path looks like.
 
-1. Token is validly signed
-2. `act.sub` matches the `requester`
+2. **Attack**: The attacker obtains their own token via `initial_grant` and steals `agent_b.token`. They splice the two together, presenting `agent_b.token` as the subject and their own token as the actor. The caller check passes since they are presenting their own token. The STS issues a token with a forged `act` chain and escalated scope. The path `Alice -> Agent A -> Agent B -> Attacker` never existed.
 
-The checking of `act.sub` validates that the `requester` is who they say they are. The attacker must obtain a token where they are the named actor, which is only possible through the forged exchange.
-
-The demo runs through 3 stages:
-
-1. **Session 1**: Alice authenticates to Agent A, which delegates to Agent B with reduced scope. Each delegation step passes the `aud` check.
-
-2. **Session 2**: Bob authenticates to Agent C, which delegates to Agent D with reduced scope. Same flow, separate session.
-
-3. **Attack**: The attacker intercepts one token from each session. Direct access with either token fails because `act.sub` does not match `attacker`. They forge an exchange request pairing Alice's `sub` with Agent D's `act` chain. The `aud/sub` mismatch (`agent-b` vs `agent-d`) goes undetected by the vulnerable STS, which issues a token naming the attacker as a legitimate actor on Alice's delegation chain. The attacker authenticates as themselves and accesses Alice's protected resource.
-
+The attacker authenticates as themselves and cannot impersonate any other agent, as tokens are signed by the STS and cannot be forged. The attack works purely because path integrity is not enforced.

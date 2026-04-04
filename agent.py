@@ -7,4 +7,4 @@ class Agent:
         self.token = token
 
     def delegate_to(self, sts, target_name, scopes):
-        return sts.exchange(self.token, self.token, target_name, scopes)
+        return sts.exchange(self.token, self.token, target_name, scopes, caller=self.name)
