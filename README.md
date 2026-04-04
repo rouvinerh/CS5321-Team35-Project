@@ -4,7 +4,15 @@ Demonstrates a cross-session token splicing attack against a vulnerable OAuth 2.
 
 ## Vulnerability
 
-RFC 8693 does not require the STS to verify the full delegation path when processing a token exchange. Even with a caller identity check, an attacker who steals a token can splice it with their own token as the actor, inserting themselves into a delegation chain they were never part of. The STS accepts the exchange because each token is individually valid. The full path is never verified.
+RFC 8693 does not require the STS to verify the full delegation path when processing a token exchange. Even with a caller identity check, an attacker who steals a token can splice it with their own token as the actor, inserting themselves into a delegation chain they were never part of. The STS validates tokens individually but does not verify that the delegation chain is continuous.
+
+A valid delegation requires the following:
+
+```
+subject_token.aud == actor_token.act.sub
+```
+
+This ensures that the entity presenting the token is the same entity the token was issued for. The vulnerable implementation does not enforce this check, allowing an attacker to splice together unrelated tokens and create a forged delegation path.
 
 ## Setup and Demo
 
@@ -64,7 +72,15 @@ Tokens are signed JWTs using HS256, carrying 4 fields:
 
 When an agent delegates, it presents 2 tokens. The `subject_token` is the token it currently holds, identifying who the delegation is on behalf of (`sub`). The `actor_token` identifies the entity requesting the exchange, which in this implementation is the same token since the agent's identity is already recorded in the `act` chain. The STS combines them to issue a new token for the next agent in the chain.
 
-In a legitimate exchange, `aud` must match the outermost `act.sub`, which dictates that the token was issued for the agent now presenting it. In the above case, both are set to `agent-b`, meaning `agent-b` is presenting a token that was intended for it by `agent-a`.
+In a legitimate exchange, the following must hold:
+
+```
+subject_token.aud == actor_token.act.sub
+```
+
+This ensures that the token is being presented by the agent it was issued to, preserving continuity of the delegation chain.
+
+For example, if `subject_token.aud = agent-b`, then `actor_token.act.sub` must also be `agent-b`, meaning `agent-b` is the entity presenting the token it received from the previous step.
 
 ## Attack Demonstration
 
