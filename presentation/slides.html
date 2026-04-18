@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS5321 Team 35 Slides</title>
+  <style>
+    :root {
+      --bg: #e9ecef;
+      --paper: #ffffff;
+      --ink: #162235;
+      --muted: #5c6a7d;
+      --line: rgba(22, 34, 53, 0.14);
+      --navy: #17365d;
+      --green: #1f6d57;
+      --red: #a33c32;
+      --gold: #b88a2e;
+      --shadow: 0 20px 45px rgba(22, 34, 53, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        linear-gradient(180deg, #f5f6f8 0%, #e7eaee 100%);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(22, 34, 53, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 34, 53, 0.02) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    body.export-mode::before {
+      display: none;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+
+    body.export-mode .stage {
+      padding: 0;
+    }
+
+    .deck {
+      position: relative;
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      transform-origin: center center;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    .frame {
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 24px 28px 18px;
+      display: grid;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
+    .eyebrow {
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--green);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: var(--navy);
+    }
+
+    h1 {
+      font-size: 66px;
+      max-width: 12.8ch;
+    }
+
+    h2 {
+      font-size: 44px;
+      max-width: 14ch;
+    }
+
+    .subtitle,
+    .meta,
+    .footer,
+    .small {
+      color: var(--muted);
+    }
+
+    .subtitle {
+      font-size: 21px;
+      line-height: 1.45;
+      max-width: 72ch;
+    }
+
+    .meta {
+      text-align: right;
+      font-size: 16px;
+      line-height: 1.55;
+      min-width: 250px;
+    }
+
+    .content {
+      display: grid;
+      min-height: 0;
+      gap: 16px;
+    }
+
+    .two-col {
+      grid-template-columns: 1.02fr 0.98fr;
+      align-items: start;
+    }
+
+    .figure-heavy {
+      grid-template-columns: 0.88fr 1.12fr;
+      align-items: stretch;
+    }
+
+    .single-col {
+      grid-template-columns: 1fr;
+    }
+
+    .callout {
+      border-left: 4px solid var(--gold);
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+      max-width: 68ch;
+    }
+
+    .bullet-list,
+    .number-list {
+      display: grid;
+      gap: 0.95rem;
+      align-content: start;
+    }
+
+    .bullet {
+      display: grid;
+      grid-template-columns: 14px 1fr;
+      gap: 14px;
+      align-items: start;
+      font-size: 19px;
+      line-height: 1.5;
+    }
+
+    .bullet::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      margin-top: 0.42rem;
+      border-radius: 50%;
+      background: var(--navy);
+    }
+
+    .number-item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      align-items: start;
+      font-size: 19px;
+      line-height: 1.48;
+    }
+
+    .title-slide .header {
+      align-items: end;
+    }
+
+    .title-slide .content {
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: start;
+      gap: 18px;
+    }
+
+    .title-slide .callout {
+      font-size: 20px;
+      max-width: 62ch;
+    }
+
+    .title-slide .bullet-list {
+      gap: 14px;
+    }
+
+    .baseline-slide .content {
+      grid-template-columns: 0.78fr 1.22fr;
+      gap: 18px;
+    }
+
+    .baseline-slide .figure-card {
+      align-self: center;
+    }
+
+    .baseline-slide .bullet-list {
+      gap: 10px;
+    }
+
+    .baseline-slide .bullet {
+      font-size: 18px;
+    }
+
+    .baseline-slide .figure-shell {
+      padding: 12px;
+    }
+
+    .baseline-slide .caption {
+      font-size: 14px;
+    }
+
+    .number-item strong {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(23, 54, 93, 0.1);
+      color: var(--navy);
+      font-size: 1rem;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px 18px 16px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .panel h3,
+    .result-card h3,
+    .terminal-card h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+
+    .panel p,
+    .panel li,
+    .result-card p,
+    .terminal-card p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.48;
+      color: var(--ink);
+    }
+
+    .panel ul {
+      margin: 0;
+      padding-left: 1.15rem;
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .figure-card {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .figure-shell {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 16px;
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .figure-shell img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 14px;
+    }
+
+    .wide-figure-slide .figure-card {
+      align-items: stretch;
+    }
+
+    .wide-figure-slide .figure-shell {
+      width: fit-content;
+      max-width: 100%;
+      justify-self: center;
+      align-self: stretch;
+      padding: 14px;
+    }
+
+    .wide-figure-slide .figure-shell img {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      justify-self: center;
+      align-self: center;
+    }
+
+    .caption {
+      font-size: 15px;
+      line-height: 1.48;
+      color: var(--muted);
+    }
+
+    .terminal-card {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .terminal-frame {
+      min-height: 420px;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #0f1724;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      display: grid;
+      grid-template-rows: 38px 1fr;
+    }
+
+    .terminal-bar {
+      background: #152033;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+    }
+
+    .dot.red { background: #e46e5b; }
+    .dot.yellow { background: #d9a84c; }
+    .dot.green { background: #4caf7a; }
+
+    .terminal-body {
+      color: #d4deeb;
+      padding: 18px 20px;
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 16px;
+      line-height: 1.62;
+      display: grid;
+      align-content: start;
+      gap: 0.4rem;
+    }
+
+    .command {
+      color: #f3cb71;
+    }
+
+    .highlight {
+      color: #8be2c7;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .result-card {
+      border-radius: 22px;
+      padding: 20px 20px 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.76);
+      display: grid;
+      gap: 12px;
+    }
+
+    .result-card.vuln {
+      border-top: 6px solid var(--red);
+    }
+
+    .result-card.secure {
+      border-top: 6px solid var(--green);
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      width: fit-content;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .result-badge.fail {
+      background: rgba(163, 60, 50, 0.12);
+      color: var(--red);
+    }
+
+    .result-badge.pass {
+      background: rgba(31, 109, 87, 0.12);
+      color: var(--green);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 17px;
+      background: rgba(255,255,255,0.74);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: rgba(23, 54, 93, 0.08);
+      color: var(--navy);
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .progress {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .progress span {
+      width: 28px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(22, 34, 53, 0.14);
+    }
+
+    .progress span.active {
+      background: var(--green);
+    }
+
+    .nav {
+      display: none;
+    }
+
+    body.export-mode .nav {
+      display: none;
+    }
+
+    .nav button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: rgba(23, 54, 93, 0.9);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.95rem;
+      box-shadow: var(--shadow);
+    }
+
+    .nav button:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    @media (max-width: 980px) {
+      .two-col,
+      .figure-heavy,
+      .panel-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meta {
+        text-align: left;
+        min-width: 0;
+      }
+
+      .header {
+        flex-direction: column;
+      }
+    }
+
+    @page {
+      size: 1600px 900px;
+      margin: 0;
+    }
+
+    @media print {
+      html,
+      body {
+        width: auto;
+        height: auto;
+        overflow: visible;
+        background: #ffffff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      body::before,
+      .nav {
+        display: none !important;
+      }
+
+      .stage {
+        position: static;
+        display: block;
+        padding: 0;
+      }
+
+      .deck {
+        width: 1600px;
+        height: auto;
+        overflow: visible;
+        transform: none !important;
+      }
+
+      .slide,
+      .slide.active {
+        position: static;
+        display: block !important;
+        width: 1600px;
+        height: 900px;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="deck" id="deck">
+    <section class="slide active title-slide" data-title="Title">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">CS5321 Team 35</div>
+            <h1>Blocking Cross-Session Token Splicing in Token Exchange</h1>
+          </div>
+          <div class="meta">
+            Final Project Presentation<br />
+            OAuth token exchange, delegation integrity, capability chains
+          </div>
+        </div>
+        <div class="content two-col">
+          <div class="bullet-list">
+            <div class="callout">
+              We study a delegation flaw in a vulnerable STS and show how a session-bound capability chain changes the execution result from forged acceptance to rejection.
+            </div>
+            <div class="bullet">Threat: a stolen delegated token can be spliced with an attacker-controlled actor token.</div>
+            <div class="bullet">Observation: token validity alone is not enough; the delegation path must also be continuous.</div>
+            <div class="bullet">Contribution: enforce path integrity, session binding, signed hop chains, and replay-safe delegation.</div>
+          </div>
+          <div class="panel">
+            <h3>Agenda</h3>
+            <p>1. Problem setting</p>
+            <p>2. Baseline flow</p>
+            <p>3. Vulnerable attack</p>
+            <p>4. Secure defense</p>
+            <p>5. Live demo</p>
+            <p>6. Results and cost</p>
+          </div>
+        </div>
+        <div class="footer">
+          <span>CS5321 Team 35 presentation deck</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Problem">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Problem</div>
+            <h2>Why Token Exchange Needs Path Integrity</h2>
+          </div>
+          <div class="meta">
+            Core invariant<br />
+            <code>subject_token.aud == actor_token.act.sub</code>
+          </div>
+        </div>
+        <div class="content single-col">
+          <div class="panel-grid">
+            <article class="panel">
+              <h3>System Model</h3>
+              <ul>
+                <li>User delegates through multiple agents using a shared STS.</li>
+                <li>JWTs carry <code>sub</code>, <code>aud</code>, <code>act</code>, and <code>scope</code>.</li>
+                <li>Each downstream exchange should preserve a continuous delegation path.</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>Vulnerability</h3>
+              <ul>
+                <li>The vulnerable STS verifies tokens individually.</li>
+                <li>It checks caller identity, but not whether the stolen token was issued to that caller.</li>
+                <li>This enables cross-session token splicing.</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>Security Goal</h3>
+              <ul>
+                <li>Reject any exchange that joins unrelated sessions.</li>
+                <li>Prevent scope expansion and replay.</li>
+                <li>Keep the mechanism lightweight enough for short delegation chains.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="callout">
+            The attack does not break cryptography. It exploits missing delegation-path validation inside the exchange service.
+          </div>
+        </div>
+        <div class="footer">
+          <span>Problem framing</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide baseline-slide" data-title="Baseline">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Baseline</div>
+            <h2>Normal Delegation Flow</h2>
+          </div>
+          <div class="meta">
+            Legitimate path<br />
+            Alice → Agent A → Agent B
+          </div>
+        </div>
+        <div class="content figure-heavy">
+          <div class="bullet-list">
+            <div class="bullet">Alice first authenticates to Agent A.</div>
+            <div class="bullet">The STS issues an initial token for Agent A.</div>
+            <div class="bullet">Agent A delegates to Agent B with narrower scope.</div>
+            <div class="bullet">This is a valid exchange because the token presented to the STS was actually issued to the current actor.</div>
+          </div>
+          <div class="figure-card">
+            <div class="figure-shell">
+              <img src="../report/01-system-baseline-normal-delegation.svg.png" alt="Baseline delegation flow" />
+            </div>
+            <div class="caption">
+              Figure: baseline service-to-service delegation. The path is continuous and the token recipient matches the current caller.
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          <span>Figure from project report</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide wide-figure-slide" data-title="Attack">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Attack</div>
+            <h2>Cross-Session Token Splicing</h2>
+          </div>
+          <div class="meta">
+            Same attack input<br />
+            different system outcomes
+          </div>
+        </div>
+        <div class="content figure-heavy">
+          <div class="bullet-list">
+            <div class="bullet">The attacker steals Agent B’s delegated token.</div>
+            <div class="bullet">They combine it with their own actor token and submit both to the vulnerable STS.</div>
+            <div class="bullet">The caller check passes, but the path check is missing.</div>
+            <div class="bullet">The vulnerable STS mints a forged token and accepts a path that never existed.</div>
+          </div>
+          <div class="figure-card">
+            <div class="figure-shell">
+              <img src="../report/02-vulnerability-token-splicing-attack.png" alt="Vulnerable token splicing attack" />
+            </div>
+            <div class="caption">
+              Figure: a stolen subject token and an attacker-controlled actor token are spliced into one forged exchange request.
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          <span>Old system end-to-end</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide wide-figure-slide" data-title="Defense">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Defense</div>
+            <h2>Session-Bound Capability Chain</h2>
+          </div>
+          <div class="meta">
+            Secure STS checks<br />
+            caller, path, session, chain, scope, replay
+          </div>
+        </div>
+        <div class="content figure-heavy">
+          <div class="bullet-list">
+            <div class="bullet">A direct path-integrity check rejects a caller that was never the intended recipient of the token.</div>
+            <div class="bullet">Each delegation hop is recorded as an STS-signed capability with a shared session identifier.</div>
+            <div class="bullet">The secure STS validates signatures, session continuity, hop order, path continuity, nonce freshness, and scope monotonicity.</div>
+            <div class="bullet">The same attack input now fails before a new token can be minted.</div>
+          </div>
+          <div class="figure-card">
+            <div class="figure-shell">
+              <img src="../report/03-defense-secure-sts-validation.png" alt="Secure STS validation" />
+            </div>
+            <div class="caption">
+              Figure: validation pipeline in the secure design. The attack is stopped when path integrity and session consistency are enforced.
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          <span>New system end-to-end</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Demo">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Live Demo</div>
+            <h2>Run the Same Scenario in Code</h2>
+          </div>
+          <div class="meta">
+            Switch to terminal here<br />
+            <code>source .venv/bin/activate</code><br />
+            <code>python demo.py</code>
+          </div>
+        </div>
+        <div class="content two-col">
+          <div class="terminal-card">
+            <h3>Demo Flow</h3>
+            <p>The script is enter-driven and shows the same attack input under two systems.</p>
+            <div class="terminal-frame">
+              <div class="terminal-bar">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <div class="terminal-body">
+                <div><span class="command">$ source .venv/bin/activate</span></div>
+                <div><span class="command">$ python demo.py</span></div>
+                <div class="highlight">Stage 1: Normal delegation flow</div>
+                <div class="highlight">Stage 2: Same attack on Vulnerable STS</div>
+                <div class="highlight">Stage 3: Same attack on Secure STS</div>
+                <div class="highlight">Stage 4: Cost analysis</div>
+              </div>
+            </div>
+          </div>
+          <div class="number-list">
+            <div class="number-item"><strong>1</strong><div>Show the legitimate prefix first so the audience sees the intended delegation path.</div></div>
+            <div class="number-item"><strong>2</strong><div>In the vulnerable system, the code really mints a forged token for the attacker.</div></div>
+            <div class="number-item"><strong>3</strong><div>In the secure system, the same kind of input is rejected by the validation pipeline.</div></div>
+            <div class="number-item"><strong>4</strong><div>Return to the slides for the result summary and measured overhead.</div></div>
+          </div>
+        </div>
+        <div class="footer">
+          <span>Reserved slide for terminal playback</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Results">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Result</div>
+            <h2>Same Attack Input, Different Execution Result</h2>
+          </div>
+          <div class="meta">
+            Core comparison<br />
+            vulnerable accepts, secure rejects
+          </div>
+        </div>
+        <div class="content single-col">
+          <div class="result-grid">
+            <article class="result-card vuln">
+              <h3>Vulnerable STS</h3>
+              <div class="result-badge fail">Forged token accepted</div>
+              <p>The caller check passes.</p>
+              <p>The path check is missing.</p>
+              <p>A new token is minted for the attacker, creating a forged path.</p>
+            </article>
+            <article class="result-card secure">
+              <h3>Secure STS</h3>
+              <div class="result-badge pass">Request rejected</div>
+              <p>The same kind of attack input reaches the secure exchange path.</p>
+              <p>Path integrity and session validation reject the request before minting.</p>
+              <p>The delegation chain is preserved as a security object, not just metadata.</p>
+            </article>
+          </div>
+          <div class="panel-grid">
+            <article class="panel">
+              <h3>Replay</h3>
+              <p>Blocked by nonce freshness checks on the latest capability.</p>
+            </article>
+            <article class="panel">
+              <h3>Scope Escalation</h3>
+              <p>Blocked by requiring the requested scope to remain a subset of the previous hop.</p>
+            </article>
+            <article class="panel">
+              <h3>Tampering</h3>
+              <p>Blocked by HMAC-protected capability signatures and chain continuity checks.</p>
+            </article>
+          </div>
+        </div>
+        <div class="footer">
+          <span>Main empirical takeaway</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Cost">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Evaluation</div>
+            <h2>Cost Remains Small</h2>
+          </div>
+          <div class="meta">
+            Secure prototype<br />
+            sub-millisecond across 1–5 hops
+          </div>
+        </div>
+        <div class="content two-col">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Depth</th>
+                  <th>Avg latency (ms)</th>
+                  <th>Chain size (chars)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>0.04</td><td>580</td></tr>
+                <tr><td>2</td><td>0.09</td><td>872</td></tr>
+                <tr><td>3</td><td>0.13</td><td>1164</td></tr>
+                <tr><td>4</td><td>0.18</td><td>1456</td></tr>
+                <tr><td>5</td><td>0.23</td><td>1748</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bullet-list">
+            <div class="bullet">Overhead grows roughly linearly with delegation depth because more chain state is validated.</div>
+            <div class="bullet">The measured exchange latency remains below one millisecond in this prototype.</div>
+            <div class="bullet">This makes the defense practical for short service-to-service delegation chains.</div>
+            <div class="bullet">The core benefit is stronger delegation integrity with modest runtime cost.</div>
+          </div>
+        </div>
+        <div class="footer">
+          <span>Measured on local prototype runs</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Conclusion">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Conclusion</div>
+            <h2>What the Demo Establishes</h2>
+          </div>
+          <div class="meta">
+            Final takeaways<br />
+            vulnerability, fix, cost
+          </div>
+        </div>
+        <div class="content single-col">
+          <div class="panel-grid">
+            <article class="panel">
+              <h3>1. Real Vulnerability</h3>
+              <p>The vulnerable STS can be driven into minting a forged token using only valid, signed inputs.</p>
+            </article>
+            <article class="panel">
+              <h3>2. Real Change in Code</h3>
+              <p>Our secure design changes the execution result for the same attack pattern from acceptance to rejection.</p>
+            </article>
+            <article class="panel">
+              <h3>3. Manageable Cost</h3>
+              <p>The defense adds measurable but still small overhead for short delegation chains.</p>
+            </article>
+          </div>
+          <div class="callout">
+            The project’s central claim is not just that the attack can be explained, but that delegation integrity can be enforced in code with a clear and practical validation path.
+          </div>
+        </div>
+        <div class="footer">
+          <span>End of deck</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="prevBtn">← Prev</button>
+    <button id="nextBtn">Next →</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const exportMode = params.get('export') === '1';
+    const requestedSlide = Number.parseInt(params.get('slide') || '0', 10);
+    if (exportMode) {
+      document.body.classList.add('export-mode');
+    }
+
+    const deck = document.getElementById('deck');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progressBars = Array.from(document.querySelectorAll('[data-progress]'));
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let index = 0;
+
+    function fitDeck() {
+      if (exportMode) {
+        deck.style.transform = 'none';
+        return;
+      }
+      const scale = Math.min(
+        (window.innerWidth - 48) / 1600,
+        (window.innerHeight - 48) / 900
+      );
+      deck.style.transform = `scale(${Math.max(scale, 0.1)})`;
+    }
+
+    function renderProgress() {
+      progressBars.forEach((bar) => {
+        bar.innerHTML = '';
+        slides.forEach((_, i) => {
+          const seg = document.createElement('span');
+          if (i === index) seg.classList.add('active');
+          bar.appendChild(seg);
+        });
+      });
+    }
+
+    function showSlide(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === slides.length - 1;
+      renderProgress();
+      document.title = `CS5321 Slides - ${slides[index].dataset.title}`;
+    }
+
+    prevBtn.addEventListener('click', () => showSlide(index - 1));
+    nextBtn.addEventListener('click', () => showSlide(index + 1));
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+        event.preventDefault();
+        showSlide(index + 1);
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault();
+        showSlide(index - 1);
+      }
+      if (event.key === 'Home') {
+        showSlide(0);
+      }
+      if (event.key === 'End') {
+        showSlide(slides.length - 1);
+      }
+    });
+
+    window.addEventListener('resize', fitDeck);
+    fitDeck();
+    showSlide(Number.isFinite(requestedSlide) ? requestedSlide : 0);
+  </script>
+</body>
+</html>

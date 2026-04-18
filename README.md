@@ -19,11 +19,8 @@ This ensures that the entity presenting the token is the same entity the token w
 ```bash
 pip3 install -r requirements.txt
 
-# Demonstrate vulnerability
-python3 vulnerable_demo.py
-
-# Demonstrate solution
-python3 secure_demo.py
+# Run the end-to-end demo
+python3 demo.py
 ```
 
 ## Implementation
