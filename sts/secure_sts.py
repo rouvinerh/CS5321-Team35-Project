@@ -2,7 +2,6 @@ import uuid
 import time
 from utils.token_utils import sign_token, verify_token, sign_capability, verify_capability_sig
 
-
 class SecureSTS:
     def __init__(self):
         self._used_nonces = set()
@@ -118,7 +117,7 @@ class SecureSTS:
             if time.time() > cap["expires_at"]:
                 raise ValueError(f"Capability at hop {i} has expired")
 
-            # Nonce replay check — only applies to the last cap (the current request's cap).
+            # Nonce replay check: only applies to the last cap (the current request's cap).
             # Previous caps in the chain were already validated at earlier hops.
             if i == len(chain) - 1:
                 nonce = cap.get("nonce")

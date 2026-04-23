@@ -5,7 +5,7 @@
 RFC 8693 (OAuth 2.0 Token Exchange) does not mandate that a Security Token Service (STS) verify the full delegation path when processing a token exchange request. The vulnerable STS only checks that the caller matches the actor field in the presented token:
 
 ```python
-# vulnerable_sts.py — the only check performed
+# vulnerable_sts.py: the only check performed
 if caller != act_claims["act"]["sub"]:
     raise ValueError(...)
 # subject_token.aud vs actor_token.act.sub is never verified
@@ -44,7 +44,7 @@ The vulnerable implementation ignores this invariant entirely.
 [+]   path Alice -> Agent A -> Agent B -> Attacker never existed
 ```
 
-**What happened:** The attacker obtained their own token via `initial_grant`, then presented `agent_b.token` (stolen) as the `subject_token` and their own token as the `actor_token`. The STS validated each token individually, but because it never checked whether `agent_b.token.aud` matched `attacker_token.act.sub`, it issued a token on behalf of Alice to the attacker — with scope `['A', 'B', 'C']`, wider than the `['A', 'B']` that Agent B was ever authorised to hold.
+**What happened:** The attacker obtained their own token via `initial_grant`, then presented `agent_b.token` (stolen) as the `subject_token` and their own token as the `actor_token`. The STS validated each token individually, but because it never checked whether `agent_b.token.aud` matched `attacker_token.act.sub`, it issued a token on behalf of Alice to the attacker with scope `['A', 'B', 'C']`, wider than the `['A', 'B']` that Agent B was ever authorised to hold.
 
 ---
 
@@ -52,7 +52,7 @@ The vulnerable implementation ignores this invariant entirely.
 
 The defence operates at two layers.
 
-### 3.1 Layer 1 — Path Integrity Check (Direct Fix)
+### 3.1 Layer 1: Path Integrity Check (Direct Fix)
 
 A single additional check in `exchange()` closes the core vulnerability:
 
@@ -64,7 +64,7 @@ if sub_claims["aud"] != act_claims["act"]["sub"]:
 
 This enforces that the token being presented was actually issued to the agent presenting it. An attacker holding a stolen token whose `aud` does not match their own `act.sub` is rejected immediately.
 
-### 3.2 Layer 2 — Capability Chain (Cryptographic Path History)
+### 3.2 Layer 2: Capability Chain (Cryptographic Path History)
 
 Path integrity alone is insufficient if the attacker is already a participant in some delegation chain. The capability chain provides an unforgeable, signed record of every delegation hop from the original grant onward.
 
@@ -132,7 +132,7 @@ The STS returns each capability **only to the agent that performed the exchange*
 
 ## 4. Secure Demo Output
 
-### Stage 1 — Legitimate Delegation Chain
+### Stage 1: Legitimate Delegation Chain
 
 ```
 [+] STAGE 1: Legitimate delegation chain
@@ -146,22 +146,22 @@ The STS returns each capability **only to the agent that performed the exchange*
 [+]     hop 1: agent-a -> agent-b, scope=['read:orders'], nonce=0083ab8d...
 ```
 
-### Stage 2 — Attack Demonstrations (All Blocked)
+### Stage 2: Attack Demonstrations (All Blocked)
 
 ```
-[+] Attack 2a: Token splicing — no capability chain
+[+] Attack 2a: Token splicing: no capability chain
 [+]   Attacker steals agent_b.token (aud=agent-b) and presents own token as actor
 [+]   subject_token.aud='agent-b' != actor_token.act.sub='attacker'
 [+] BLOCKED: Path integrity check failed: subject_token.aud='agent-b' != actor_token.act.sub='attacker'
 
-[+] Attack 2b: Replay — reusing agent_b's capability chain
+[+] Attack 2b: Replay: reusing agent_b's capability chain
 [+]   Attacker replays chain_b (already consumed nonces)
 [+] BLOCKED: Replayed nonce detected at hop 1
 
-[+] Attack 2c: Scope escalation — requesting write:orders after only read:orders was granted
+[+] Attack 2c: Scope escalation: requesting write:orders after only read:orders was granted
 [+] BLOCKED: Scope expansion not allowed: requested ['read:orders', 'write:orders'] but last hop only grants ['read:orders']
 
-[+] Attack 2d: Tampered capability — attacker modifies session_id in chain
+[+] Attack 2d: Tampered capability: attacker modifies session_id in chain
 [+] BLOCKED: Invalid capability signature
 ```
 

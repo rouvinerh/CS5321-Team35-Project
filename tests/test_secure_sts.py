@@ -147,7 +147,7 @@ class TestReplayPrevention:
         sts = SecureSTS()
         token, chain = sts.initial_grant("alice", "agent-a", ["read"])
 
-        # First exchange — legitimate, consumes nonces
+        # First exchange - legitimate, consumes nonces
         token2, chain2 = sts.exchange(
             token, token, "agent-b", ["read"],
             caller="agent-a", capability_chain=chain,
