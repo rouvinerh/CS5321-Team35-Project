@@ -616,44 +616,121 @@
 <body>
   <div class="stage">
     <div class="deck" id="deck">
+ 
     <section class="slide active title-slide" data-title="Title">
       <div class="frame">
         <div class="header">
           <div>
             <div class="eyebrow">CS5321 Team 35</div>
-            <h1>Blocking Cross-Session Token Splicing in Token Exchange</h1>
-          </div>
-          <div class="meta">
-            Final Project Presentation<br />
-            OAuth token exchange, delegation integrity, capability chains
+            <h1>Blocking Cross-Session Token Splicing</h1>
           </div>
         </div>
         <div class="content two-col">
           <div class="bullet-list">
             <div class="callout">
-              We study a delegation flaw in a vulnerable STS and show how a session-bound capability chain changes the execution result from forged acceptance to rejection.
+              This project studies a delegation flaw in a vulnerable STS and demonstrates how a session-bound capability chain, inspired by SIFF, changes the outcome from forged acceptance to rejection.
             </div>
-            <div class="bullet">Threat: a stolen delegated token can be spliced with an attacker-controlled actor token.</div>
-            <div class="bullet">Observation: token validity alone is not enough; the delegation path must also be continuous.</div>
-            <div class="bullet">Contribution: enforce path integrity, session binding, signed hop chains, and replay-safe delegation.</div>
+            <div class="bullet">Threat: A stolen delegated token can be spliced with an attacker-controlled actor token.</div>
+            <div class="bullet">Observation: Token validity alone is not enough. The delegation path must also be validated.</div>
+            <div class="bullet">Contribution: Enforce path integrity, session binding, signed hop chains, and replay-safe delegation.</div>
           </div>
           <div class="panel">
             <h3>Agenda</h3>
-            <p>1. Problem setting</p>
-            <p>2. Baseline flow</p>
-            <p>3. Vulnerable attack</p>
-            <p>4. Secure defense</p>
-            <p>5. Live demo</p>
-            <p>6. Results and cost</p>
+            <p>1. Background</p>
+            <p>2. Problem setting</p>
+            <p>3. Baseline flow</p>
+            <p>4. Vulnerable attack</p>
+            <p>5. Secure defence</p>
+            <p>6. Live demo</p>
+            <p>7. Results and cost</p>
           </div>
         </div>
         <div class="footer">
-          <span>CS5321 Team 35 presentation deck</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
+ 
+    <section class="slide" data-title="Background">
+      <div class="frame">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Background</div>
+            <h2>OAuth, Delegation, and the STS</h2>
+          </div>
 
+        </div>
+        <div class="content single-col">
+          <div class="panel-grid">
+            <article class="panel">
+              <h3>What is OAuth?</h3>
+              <p>OAuth lets software act on a user's behalf without sharing their password via <strong>tokens</strong>: signed, time-limited passes that specify exactly what is permitted, for how long, and on whose behalf.</p>
+            </article>
+            <article class="panel">
+              <h3>What is Delegation?</h3>
+              <p>When a service needs to pass authority further down a chain, each handoff is a <strong>delegation hop</strong>. Permissions can only narrow at each step.</p>
+              <p style="margin-top:10px">Example: A user authorises an AI assistant to read their inbox. The agent <strong>delegates</strong> a narrower credential to a sub-agent that can only schedule meetings.</p>
+            </article>
+            <article class="panel">
+              <h3>Where it is used</h3>
+              <ul>
+                <li>AI agent pipelines acting on behalf of a user across multiple services</li>
+                <li>Cloud microservices calling each other under a delegated identity (AWS, Azure)</li>
+                <li>CI/CD runners acting on behalf of engineers in automated pipelines</li>
+              </ul>
+            </article>
+          </div>
+          <div class="callout">
+            The <strong>Security Token Service (STS)</strong> is the central authority that issues and validates tokens at each hop. 
+          </div>
+        </div>
+        <div class="footer">
+          <span>CS5321 Team 35</span>
+          <div class="progress" data-progress></div>
+        </div>
+      </div>
+    </section>
+    <section class="slide" data-title="Token Structure">
+  <div class="frame">
+    <div class="header">
+      <div>
+        <div class="eyebrow">Background</div>
+        <h2>Token Exchange</h2>
+      </div>
+
+    </div>
+    <div class="content single-col">
+      <div class="result-grid">
+        <article class="result-card secure">
+          <h3>Subject Token</h3>
+          <p>Represents the original user's authority. It declares <em>who</em> authorised the chain and what they permitted.</p>
+          <div style="margin-top: 14px; display: grid; gap: 8px;">
+            <div class="bullet"><span><code>sub</code>: &nbsp;the original user (e.g. Alice)</span></div>
+            <div class="bullet"><span><code>aud</code>: &nbsp;the agent this token was issued to</span></div>
+            <div class="bullet"><span><code>scope</code>: &nbsp;the permissions granted at this hop</span></div>
+          </div>
+        </article>
+        <article class="result-card secure">
+          <h3>Actor Token</h3>
+          <p>Proves the identity of the agent making the request right now. It declares <em>who</em> is presenting the subject token.</p>
+          <div style="margin-top: 14px; display: grid; gap: 8px;">
+            <div class="bullet"><span><code>sub</code>: &nbsp;the agent currently acting</span></div>
+            <div class="bullet"><span><code>act</code>: &nbsp;records the chain of prior actors</span></div>
+            <div class="bullet"><span><code>scope</code>: &nbsp;the narrowed permissions being requested</span></div>
+          </div>
+        </article>
+      </div>
+      <div class="callout">
+        The STS must verify that <code>subject_token.aud</code> matches <code>actor_token.sub</code>. This confirms the subject token was actually issued to the agent now presenting it, not just that both tokens are individually valid.
+      </div>
+    </div>
+        <div class="footer">
+          <span>CS5321 Team 35</span>
+          <div class="progress" data-progress></div>
+        </div>
+  </div>
+</section>
     <section class="slide" data-title="Problem">
       <div class="frame">
         <div class="header">
@@ -671,39 +748,39 @@
             <article class="panel">
               <h3>System Model</h3>
               <ul>
-                <li>User delegates through multiple agents using a shared STS.</li>
+                <li>A user delegates through multiple agents via a shared STS.</li>
                 <li>JWTs carry <code>sub</code>, <code>aud</code>, <code>act</code>, and <code>scope</code>.</li>
-                <li>Each downstream exchange should preserve a continuous delegation path.</li>
+                <li>Each downstream exchange must preserve a continuous delegation path.</li>
               </ul>
             </article>
             <article class="panel">
               <h3>Vulnerability</h3>
               <ul>
-                <li>The vulnerable STS verifies tokens individually.</li>
-                <li>It checks caller identity, but not whether the stolen token was issued to that caller.</li>
-                <li>This enables cross-session token splicing.</li>
+                <li>The vulnerable STS verifies each token on its own.</li>
+                <li>It checks caller identity, but not whether the subject token was actually issued to that caller.</li>
+                <li>This gap enables cross-session token splicing.</li>
               </ul>
             </article>
             <article class="panel">
               <h3>Security Goal</h3>
               <ul>
-                <li>Reject any exchange that joins unrelated sessions.</li>
+                <li>Reject any exchange that joins tokens from unrelated sessions.</li>
                 <li>Prevent scope expansion and replay.</li>
                 <li>Keep the mechanism lightweight enough for short delegation chains.</li>
               </ul>
             </article>
           </div>
           <div class="callout">
-            The attack does not break cryptography. It exploits missing delegation-path validation inside the exchange service.
+            The attack does not break cryptography. It exploits a missing path-validation step inside the exchange service.
           </div>
         </div>
         <div class="footer">
-          <span>Problem framing</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
-
+ 
     <section class="slide baseline-slide" data-title="Baseline">
       <div class="frame">
         <div class="header">
@@ -711,34 +788,31 @@
             <div class="eyebrow">Baseline</div>
             <h2>Normal Delegation Flow</h2>
           </div>
-          <div class="meta">
-            Legitimate path<br />
-            Alice → Agent A → Agent B
-          </div>
+
         </div>
         <div class="content figure-heavy">
           <div class="bullet-list">
-            <div class="bullet">Alice first authenticates to Agent A.</div>
-            <div class="bullet">The STS issues an initial token for Agent A.</div>
-            <div class="bullet">Agent A delegates to Agent B with narrower scope.</div>
-            <div class="bullet">This is a valid exchange because the token presented to the STS was actually issued to the current actor.</div>
+            <div class="bullet">Alice authenticates to Agent A.</div>
+            <div class="bullet">The STS issues an initial token scoped to Agent A.</div>
+            <div class="bullet">Agent A exchanges it for a narrower token scoped to Agent B.</div>
+            <div class="bullet">This exchange is valid because the token was issued to the agent now presenting it. The path is continuous.</div>
           </div>
           <div class="figure-card">
             <div class="figure-shell">
               <img src="../report/01-system-baseline-normal-delegation.svg.png" alt="Baseline delegation flow" />
             </div>
             <div class="caption">
-              Figure: baseline service-to-service delegation. The path is continuous and the token recipient matches the current caller.
+              Figure: normal service-to-service delegation. Each token recipient matches the caller at that step.
             </div>
           </div>
         </div>
         <div class="footer">
-          <span>Figure from project report</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
-
+ 
     <section class="slide wide-figure-slide" data-title="Attack">
       <div class="frame">
         <div class="header">
@@ -746,116 +820,152 @@
             <div class="eyebrow">Attack</div>
             <h2>Cross-Session Token Splicing</h2>
           </div>
-          <div class="meta">
-            Same attack input<br />
-            different system outcomes
-          </div>
+
         </div>
         <div class="content figure-heavy">
           <div class="bullet-list">
-            <div class="bullet">The attacker steals Agent B’s delegated token.</div>
-            <div class="bullet">They combine it with their own actor token and submit both to the vulnerable STS.</div>
-            <div class="bullet">The caller check passes, but the path check is missing.</div>
-            <div class="bullet">The vulnerable STS mints a forged token and accepts a path that never existed.</div>
+            <div class="bullet">The attacker steals Agent B's delegated token.</div>
+            <div class="bullet">It is paired with the attacker's own actor token and both are submitted to the vulnerable STS.</div>
+            <div class="bullet">The caller check passes. The path check does not exist.</div>
+            <div class="bullet">The STS mints a forged token, accepting a delegation path that never happened.</div>
           </div>
           <div class="figure-card">
             <div class="figure-shell">
               <img src="../report/02-vulnerability-token-splicing-attack.png" alt="Vulnerable token splicing attack" />
             </div>
             <div class="caption">
-              Figure: a stolen subject token and an attacker-controlled actor token are spliced into one forged exchange request.
+              Figure: a stolen subject token and an attacker-controlled actor token are spliced into a single forged exchange request.
             </div>
           </div>
         </div>
         <div class="footer">
-          <span>Old system end-to-end</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
-
-    <section class="slide wide-figure-slide" data-title="Defense">
+ 
+    <section class="slide wide-figure-slide" data-title="Defence">
       <div class="frame">
         <div class="header">
           <div>
-            <div class="eyebrow">Defense</div>
+            <div class="eyebrow">Defence</div>
             <h2>Session-Bound Capability Chain</h2>
           </div>
-          <div class="meta">
-            Secure STS checks<br />
-            caller, path, session, chain, scope, replay
-          </div>
+
         </div>
         <div class="content figure-heavy">
           <div class="bullet-list">
-            <div class="bullet">A direct path-integrity check rejects a caller that was never the intended recipient of the token.</div>
-            <div class="bullet">Each delegation hop is recorded as an STS-signed capability with a shared session identifier.</div>
-            <div class="bullet">The secure STS validates signatures, session continuity, hop order, path continuity, nonce freshness, and scope monotonicity.</div>
-            <div class="bullet">The same attack input now fails before a new token can be minted.</div>
+            <div class="bullet">A path-integrity check rejects any caller that was not the intended recipient of the subject token.</div>
+            <div class="bullet">Each delegation hop is recorded as an STS-signed capability tied to a shared session identifier.</div>
+            <div class="bullet">The secure STS validates signatures, session continuity, hop order, nonce freshness, and scope monotonicity.</div>
+            <div class="bullet">The same attack input now fails before any new token is minted.</div>
           </div>
           <div class="figure-card">
             <div class="figure-shell">
-              <img src="../report/03-defense-secure-sts-validation.png" alt="Secure STS validation" />
+              <img src="../report/03-defence-secure-sts-validation.png" alt="Secure STS validation" />
             </div>
             <div class="caption">
-              Figure: validation pipeline in the secure design. The attack is stopped when path integrity and session consistency are enforced.
+              Figure: the secure validation pipeline. The attack is stopped at path integrity before minting begins.
             </div>
           </div>
         </div>
         <div class="footer">
-          <span>New system end-to-end</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
 
-    <section class="slide" data-title="Demo">
-      <div class="frame">
-        <div class="header">
-          <div>
-            <div class="eyebrow">Live Demo</div>
-            <h2>Run the Same Scenario in Code</h2>
-          </div>
-          <div class="meta">
-            Switch to terminal here<br />
-            <code>source .venv/bin/activate</code><br />
-            <code>python demo.py</code>
-          </div>
-        </div>
-        <div class="content two-col">
-          <div class="terminal-card">
-            <h3>Demo Flow</h3>
-            <p>The script is enter-driven and shows the same attack input under two systems.</p>
-            <div class="terminal-frame">
-              <div class="terminal-bar">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-              </div>
-              <div class="terminal-body">
-                <div><span class="command">$ source .venv/bin/activate</span></div>
-                <div><span class="command">$ python demo.py</span></div>
-                <div class="highlight">Stage 1: Normal delegation flow</div>
-                <div class="highlight">Stage 2: Same attack on Vulnerable STS</div>
-                <div class="highlight">Stage 3: Same attack on Secure STS</div>
-                <div class="highlight">Stage 4: Cost analysis</div>
-              </div>
-            </div>
-          </div>
-          <div class="number-list">
-            <div class="number-item"><strong>1</strong><div>Show the legitimate prefix first so the audience sees the intended delegation path.</div></div>
-            <div class="number-item"><strong>2</strong><div>In the vulnerable system, the code really mints a forged token for the attacker.</div></div>
-            <div class="number-item"><strong>3</strong><div>In the secure system, the same kind of input is rejected by the validation pipeline.</div></div>
-            <div class="number-item"><strong>4</strong><div>Return to the slides for the result summary and measured overhead.</div></div>
-          </div>
-        </div>
-        <div class="footer">
-          <span>Reserved slide for terminal playback</span>
-          <div class="progress" data-progress></div>
+  <section class="slide" data-title="Defence">
+    <div class="frame">
+      <div class="header">
+        <div>
+          <div class="eyebrow">Defence</div>
+          <h2>Relation to SIFF</h2>
         </div>
       </div>
-    </section>
+      <div class="content single-col">
+        <div class="panel-grid">
+          <article class="panel">
+            <h3>SIFF (Network Layer)</h3>
+            <ul>
+              <li>Routers issue capability tokens to legitimate flows</li>
+              <li>Packets without a valid capability for that flow are dropped</li>
+              <li>Path membership is enforced without storing per-flow state</li>
+            </ul>
+          </article>
+          <article class="panel">
+            <h3>This Project (Identity Layer)</h3>
+            <ul>
+              <li>The STS issues signed capabilities at each delegation hop</li>
+              <li>Exchange requests without a valid capability chain are rejected</li>
+              <li>Path membership is enforced without storing per-session state</li>
+            </ul>
+          </article>
+          <article class="panel">
+            <h3>Component Mapping</h3>
+            <ul>
+              <li>Flow identifier: Shared session identifier</li>
+              <li>Per-packet capability: Per-hop signed capability</li>
+              <li>Router capability check: STS path-integrity check</li>
+            </ul>
+          </article>
+        </div>
+        <div class="callout">
+          SIFF asks: Did this packet travel a legitimate authorised path? This project asks a similar question one layer up: Did the token travel a legitimate authorised delegation chain?
+        </div>
+      </div>
+      <div class="footer">
+        <span>CS5321 Team 35</span>
+        <div class="progress" data-progress></div>
+      </div>
+    </div>
+  </section>
+  
+      <section class="slide" data-title="Demo">
+        <div class="frame">
+          <div class="header">
+            <div>
+              <div class="eyebrow">Live Demo</div>
+              <h2>Run the Same Scenario in Code</h2>
+            </div>
 
+          </div>
+          <div class="content two-col">
+            <div class="terminal-card">
+              <h3>Demo Flow</h3>
+              <p>Enter-driven. Same attack input, run against both systems.</p>
+              <div class="terminal-frame">
+                <div class="terminal-bar">
+                  <span class="dot red"></span>
+                  <span class="dot yellow"></span>
+                  <span class="dot green"></span>
+                </div>
+                <div class="terminal-body">
+                  <div><span class="command">$ source .venv/bin/activate</span></div>
+                  <div><span class="command">$ python demo.py</span></div>
+                  <div class="highlight">Stage 1: Normal delegation flow</div>
+                  <div class="highlight">Stage 2: Same attack on Vulnerable STS</div>
+                  <div class="highlight">Stage 3: Same attack on Secure STS</div>
+                  <div class="highlight">Stage 4: Cost analysis</div>
+                </div>
+              </div>
+            </div>
+            <div class="number-list">
+              <div class="number-item"><strong>1</strong><div>Show the legitimate flow first so the intended delegation path is clear.</div></div>
+              <div class="number-item"><strong>2</strong><div>Run the attack against the vulnerable STS. A forged token is actually minted.</div></div>
+              <div class="number-item"><strong>3</strong><div>Run the same input against the secure STS. The validation pipeline rejects it.</div></div>
+              <div class="number-item"><strong>4</strong><div>Return to slides for the result summary and overhead numbers.</div></div>
+            </div>
+          </div>
+          <div class="footer">
+            <span>CS5321 Team 35</span>
+            <div class="progress" data-progress></div>
+          </div>
+        </div>
+      </section>
+ 
     <section class="slide" data-title="Results">
       <div class="frame">
         <div class="header">
@@ -863,10 +973,7 @@
             <div class="eyebrow">Result</div>
             <h2>Same Attack Input, Different Execution Result</h2>
           </div>
-          <div class="meta">
-            Core comparison<br />
-            vulnerable accepts, secure rejects
-          </div>
+
         </div>
         <div class="content single-col">
           <div class="result-grid">
@@ -874,25 +981,25 @@
               <h3>Vulnerable STS</h3>
               <div class="result-badge fail">Forged token accepted</div>
               <p>The caller check passes.</p>
-              <p>The path check is missing.</p>
-              <p>A new token is minted for the attacker, creating a forged path.</p>
+              <p>The path check is absent.</p>
+              <p>A new token is minted for the attacker, creating a delegation path that never existed.</p>
             </article>
             <article class="result-card secure">
               <h3>Secure STS</h3>
               <div class="result-badge pass">Request rejected</div>
-              <p>The same kind of attack input reaches the secure exchange path.</p>
-              <p>Path integrity and session validation reject the request before minting.</p>
-              <p>The delegation chain is preserved as a security object, not just metadata.</p>
+              <p>The same attack input enters the secure exchange path.</p>
+              <p>Path integrity and session validation reject it before minting.</p>
+              <p>The delegation chain is treated as a security object, not just metadata.</p>
             </article>
           </div>
           <div class="panel-grid">
             <article class="panel">
               <h3>Replay</h3>
-              <p>Blocked by nonce freshness checks on the latest capability.</p>
+              <p>Blocked by nonce freshness checks on the latest capability in the chain.</p>
             </article>
             <article class="panel">
               <h3>Scope Escalation</h3>
-              <p>Blocked by requiring the requested scope to remain a subset of the previous hop.</p>
+              <p>Blocked by requiring the requested scope to be a strict subset of the previous hop.</p>
             </article>
             <article class="panel">
               <h3>Tampering</h3>
@@ -901,22 +1008,18 @@
           </div>
         </div>
         <div class="footer">
-          <span>Main empirical takeaway</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
-
+ 
     <section class="slide" data-title="Cost">
       <div class="frame">
         <div class="header">
           <div>
             <div class="eyebrow">Evaluation</div>
-            <h2>Cost Remains Small</h2>
-          </div>
-          <div class="meta">
-            Secure prototype<br />
-            sub-millisecond across 1–5 hops
+            <h2>Overhead Remains Small</h2>
           </div>
         </div>
         <div class="content two-col">
@@ -939,19 +1042,19 @@
             </table>
           </div>
           <div class="bullet-list">
-            <div class="bullet">Overhead grows roughly linearly with delegation depth because more chain state is validated.</div>
-            <div class="bullet">The measured exchange latency remains below one millisecond in this prototype.</div>
-            <div class="bullet">This makes the defense practical for short service-to-service delegation chains.</div>
-            <div class="bullet">The core benefit is stronger delegation integrity with modest runtime cost.</div>
+            <div class="bullet">At depth 1, average latency is 0.04 ms. At depth 5, it reaches 0.23 ms, an increase of under 0.2 ms across the full range.</div>
+            <div class="bullet">Chain size grows by 292 characters per hop, reflecting the additional signed capability appended at each step.</div>
+            <div class="bullet">Exchange latency remains below one millisecond at all tested depths.</div>
+            <div class="bullet">Both metrics scale linearly, making overhead predictable and bounded for short delegation chains.</div>
           </div>
         </div>
         <div class="footer">
-          <span>Measured on local prototype runs</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
-
+ 
     <section class="slide" data-title="Conclusion">
       <div class="frame">
         <div class="header">
@@ -959,36 +1062,34 @@
             <div class="eyebrow">Conclusion</div>
             <h2>What the Demo Establishes</h2>
           </div>
-          <div class="meta">
-            Final takeaways<br />
-            vulnerability, fix, cost
-          </div>
+
         </div>
         <div class="content single-col">
           <div class="panel-grid">
             <article class="panel">
               <h3>1. Real Vulnerability</h3>
-              <p>The vulnerable STS can be driven into minting a forged token using only valid, signed inputs.</p>
+              <p>The vulnerable STS can be driven into minting a forged token using only valid, properly signed inputs.</p>
             </article>
             <article class="panel">
               <h3>2. Real Change in Code</h3>
-              <p>Our secure design changes the execution result for the same attack pattern from acceptance to rejection.</p>
+              <p>The secure design changes the execution result for the same attack from acceptance to rejection.</p>
             </article>
             <article class="panel">
               <h3>3. Manageable Cost</h3>
-              <p>The defense adds measurable but still small overhead for short delegation chains.</p>
+              <p>The defence adds sub-millisecond overhead that scales linearly. It is practical for real delegation chains.</p>
             </article>
           </div>
           <div class="callout">
-            The project’s central claim is not just that the attack can be explained, but that delegation integrity can be enforced in code with a clear and practical validation path.
+            The central claim is not just that this attack can be explained. It is that delegation integrity can be enforced in code, with a clear and practical validation path.
           </div>
         </div>
         <div class="footer">
-          <span>End of deck</span>
+          <span>CS5321 Team 35</span>
           <div class="progress" data-progress></div>
         </div>
       </div>
     </section>
+ 
     </div>
   </div>
 
