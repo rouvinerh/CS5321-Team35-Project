@@ -82,7 +82,7 @@ stage_header(SESSION1, "STAGE 1: Normal delegation flow", "  baseline system bef
 
 show_block(
     f"""
-[Alice] --authenticate--> [Agent A] --exchange at STS--> [Agent B]
+[Alice] --> authenticate --> [Agent A] --> exchange at STS --> [Agent B]
 
 token held by Agent A
   sub   = {a['sub']}
@@ -96,7 +96,7 @@ delegated token held by Agent B
   act   = {b['act']}
 
 legitimate path
-  Alice -> Agent A -> Agent B
+  Alice --> Agent A --> Agent B
 """,
     SESSION1,
 )
@@ -148,8 +148,8 @@ show_block(
     f"""
 result from VulnerableSTS
 
-[caller check] -> passes
-[path check]   -> missing
+[caller check] --> passes
+[path check]   --> missing
 
 forged token minted by code
   sub   = {forged['sub']}
@@ -158,7 +158,7 @@ forged token minted by code
   act   = {forged['act']}
 
 accepted forged path
-  Alice -> Agent A -> Agent B -> Attacker
+  Alice --> Agent A --> Agent B --> Attacker
 """,
     ATTACK,
 )
@@ -186,9 +186,9 @@ show_block(
     f"""
 same legitimate prefix rebuilt under SecureSTS
 
-[Alice] --authenticate--> [Agent A] --exchange at STS--> [Agent B]
+[Alice] --> authenticate --> [Agent A] --> exchange at STS --> [Agent B]
 session_id = {chain_b[0]['cap']['session_id'][:8]}...
-cap chain  = sts -> agent-a -> agent-b
+cap chain  = sts --> agent-a --> agent-b
 
 same attack input
 
@@ -202,9 +202,9 @@ scope = {sb['scope']}                     scope = {sat['scope']}
             +---- exchange request ----+
 
 SecureSTS validation path
-  [caller] -> [path] -> [session] -> [cap chain] -> [scope/replay]
-                ^
-                attack stops here
+  [caller] --> [path] --> [session] --> [cap chain] --> [scope/replay]
+                 ^
+                 attack stops here
 """,
     SUCCESS,
 )
